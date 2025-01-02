@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "187938425110",
+    "project_id": "bhandhan-mitra",
+    "storage_bucket": "bhandhan-mitra.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:187938425110:android:148884fc669dde15cde837",
+        "android_client_info": {
+          "package_name": "com.example.bandhanmitra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZEQfM-U63uLBc4TwPXA4p8c1CxV2bI_s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
