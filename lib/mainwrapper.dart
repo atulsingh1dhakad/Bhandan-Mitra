@@ -1,5 +1,5 @@
-import 'package:bandhanmitra/homescreen.dart';
-import 'package:bandhanmitra/profilescreen.dart';
+import 'package:bandhanmitra/screens/homescreen.dart';
+import 'package:bandhanmitra/screens/profilescreen.dart';
 import 'package:flutter/material.dart';
 
 class Mainwrapper extends StatefulWidget {
@@ -31,7 +31,7 @@ class _MainWrapperState extends State<Mainwrapper> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.21),
               blurRadius: 10,
               spreadRadius: 2,
               offset: const Offset(0, -3),

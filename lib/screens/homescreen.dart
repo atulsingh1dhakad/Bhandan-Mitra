@@ -8,17 +8,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String _locationInfo = 'Loading location...';
-  bool _isLoading = true; // Flag to track loading state
+  late Future<String> _locationFuture;
 
   @override
   void initState() {
     super.initState();
-    _getLocation(); // Fetch location when the screen is initialized
+    _locationFuture = _getLocation();
   }
 
-  // Fetch the location and update the state
-  Future<void> _getLocation() async {
+  // Fetch the location and return the resulting address
+  Future<String> _getLocation() async {
     loc.Location location = loc.Location();
 
     bool serviceEnabled;
@@ -30,11 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!serviceEnabled) {
       serviceEnabled = await location.requestService();
       if (!serviceEnabled) {
-        setState(() {
-          _locationInfo = 'Location services are disabled.';
-          _isLoading = false;
-        });
-        return;
+        return 'Location services are disabled.';
       }
     }
 
@@ -43,11 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (permissionGranted == loc.PermissionStatus.denied) {
       permissionGranted = await location.requestPermission();
       if (permissionGranted != loc.PermissionStatus.granted) {
-        setState(() {
-          _locationInfo = 'Location permissions are denied.';
-          _isLoading = false;
-        });
-        return;
+        return 'Location permissions are denied.';
       }
     }
 
@@ -62,22 +53,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (placemarks.isNotEmpty) {
         Placemark placemark = placemarks.first;
-        setState(() {
-          _locationInfo =
-          '${placemark.locality ?? placemark.subLocality}, ${placemark.country}';
-          _isLoading = false; // Set loading to false after location is fetched
-        });
+        return '${placemark.locality ?? placemark.subLocality}, ${placemark.country}';
       } else {
-        setState(() {
-          _locationInfo = 'Unable to determine location.';
-          _isLoading = false;
-        });
+        return 'Unable to determine location.';
       }
     } catch (e) {
-      setState(() {
-        _locationInfo = 'Failed to get location: $e';
-        _isLoading = false;
-      });
+      return 'Failed to get location: $e';
     }
   }
 
@@ -98,30 +79,52 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Row(
                       children: [
-                        _isLoading
-                            ? Column(
-                          children: [
-                            const SizedBox(height: 10),
-                            LinearProgressIndicator(
-                              minHeight: 5, // Smaller loading bar
-                              backgroundColor: Colors.grey[200],
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
-                            ),
-                          ],
-                        )
-                            : Row(
-                          children: [
-                            Icon(
-                              Icons.location_on,
-                              size: 24,
-                              color: Color(0xFFFC4E37), // Location pin icon
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              _locationInfo,
-                              style: const TextStyle(fontSize: 16, color: Colors.black),
-                            ),
-                          ],
+                        FutureBuilder<String>(
+                          future: _locationFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return Column(
+                                children: [
+                                  const SizedBox(height: 10),
+                                  LinearProgressIndicator(
+                                    minHeight: 5, // Smaller loading bar
+                                    backgroundColor: Colors.grey[200],
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                                  ),
+                                ],
+                              );
+                            } else if (snapshot.hasError) {
+                              return Row(
+                                children: [
+                                  Icon(
+                                    Icons.error,
+                                    size: 24,
+                                    color: Colors.red, // Error icon
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    'Error: ${snapshot.error}',
+                                    style: const TextStyle(fontSize: 16, color: Colors.black),
+                                  ),
+                                ],
+                              );
+                            } else {
+                              return Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
+                                    size: 24,
+                                    color: Color(0xFFFC4E37), // Location pin icon
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    snapshot.data ?? 'Unknown location',
+                                    style: const TextStyle(fontSize: 16, color: Colors.black),
+                                  ),
+                                ],
+                              );
+                            }
+                          },
                         ),
                         const SizedBox(width: 8),
                       ],
@@ -165,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Add view all functionality
                       },
                       child: const Text(
-                        'Viewall',
+                        'View all',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -213,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             SizedBox(height: 5),
                             Text(
-                              'Charted Accountant',
+                              'Chartered Accountant',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.white,

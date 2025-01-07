@@ -4,8 +4,13 @@ import 'package:bandhanmitra/mainwrapper.dart';
 
 class OTPScreen extends StatefulWidget {
   final String verificationId;
+  final String phoneNumber; // Add the phoneNumber parameter
 
-  const OTPScreen({Key? key, required this.verificationId, required String phoneNumber}) : super(key: key);
+  const OTPScreen({
+    Key? key,
+    required this.verificationId,
+    required this.phoneNumber, // Add this line
+  }) : super(key: key);
 
   @override
   _OTPScreenState createState() => _OTPScreenState();
@@ -76,7 +81,6 @@ class _OTPScreenState extends State<OTPScreen> {
                     ),
                   ],
                 ),
-
                 Card(
                   elevation: 16,
                   shadowColor: Colors.black,
@@ -97,13 +101,18 @@ class _OTPScreenState extends State<OTPScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Enter the OTP sent to your phone number',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black54,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Enter the OTP sent to ${widget.phoneNumber}', // Use the phoneNumber here
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 24),
                         Row(
