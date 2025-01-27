@@ -1,3 +1,4 @@
+import 'package:bandhanmitra/screens/loginscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -29,44 +30,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
       User? currentUser = _auth.currentUser;
 
       if (currentUser != null) {
-        String phone = currentUser.phoneNumber ?? '';
-        print("Current user's phone number: $phone");
+        String phoneNumber = currentUser.phoneNumber ?? '';
 
-        // Attempt to fetch user data by phone number
-        DocumentSnapshot userDoc = await _firestore.collection('users').doc(phone).get();
+        if (phoneNumber.isNotEmpty) {
+          if (phoneNumber.startsWith('+91')) {
+            phoneNumber = phoneNumber.substring(3);
+          }
 
-        if (userDoc.exists) {
-          setState(() {
-            fullName = userDoc['fullName'] ?? 'Not available';
-            phoneNumber = userDoc['phoneNumber'] ?? 'Not available';
-            address = userDoc['address'] ?? 'Not available';
-          });
-        } else {
-          // Fallback query if doc(phone) doesn't work
-          QuerySnapshot querySnapshot = await _firestore
-              .collection('users')
-              .where('phoneNumber', isEqualTo: phone)
-              .get();
+          DocumentSnapshot userDoc = await _firestore.collection('users').doc(phoneNumber).get();
 
-          if (querySnapshot.docs.isNotEmpty) {
-            var userDoc = querySnapshot.docs.first;
+          if (userDoc.exists) {
             setState(() {
               fullName = userDoc['fullName'] ?? 'Not available';
-              phoneNumber = userDoc['phoneNumber'] ?? 'Not available';
+              this.phoneNumber = userDoc['phoneNumber'] ?? 'Not available';
               address = userDoc['address'] ?? 'Not available';
             });
           } else {
-            print("No matching user found in Firestore.");
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('User data not found.')),
-            );
+            _showErrorDialog("No user data found for this phone number.");
           }
+        } else {
+          _showErrorDialog("Phone number is not available.");
         }
+      } else {
+        _showErrorDialog("User is not logged in.");
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching user data: $e')),
-      );
+      _showErrorDialog("Error fetching user data: $e");
     } finally {
       setState(() {
         isLoading = false;
@@ -74,9 +63,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _logout() async {
     await _auth.signOut();
-    Navigator.of(context).pushReplacementNamed('/login'); // Adjust route as needed
+    Navigator.of(context).pushReplacementNamed(PhoneLoginScreen() as String); // Navigates to login screen
   }
 
   @override

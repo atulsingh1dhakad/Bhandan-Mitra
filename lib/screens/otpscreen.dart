@@ -41,20 +41,20 @@ class _OTPScreenState extends State<OTPScreen> {
         UserCredential userCredential =
         await FirebaseAuth.instance.signInWithCredential(credential);
 
-        // Check if the user exists in Firestore
-        final userDoc = await FirebaseFirestore.instance
+        // Check if the phone number exists in Firestore
+        final querySnapshot = await FirebaseFirestore.instance
             .collection('users')
-            .doc(userCredential.user?.uid)
+            .where('phoneNumber', isEqualTo: widget.phoneNumber)
             .get();
 
-        if (userDoc.exists) {
-          // User exists, navigate to Mainwrapper
+        if (querySnapshot.docs.isNotEmpty) {
+          // Phone number exists, navigate to Mainwrapper
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => Mainwrapper()),
           );
         } else {
-          // User does not exist, navigate to UserRegistrationScreen
+          // Phone number does not exist, navigate to UserRegistrationScreen
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
