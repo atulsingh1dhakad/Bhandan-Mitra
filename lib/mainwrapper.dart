@@ -14,7 +14,7 @@ class _MainWrapperState extends State<Mainwrapper> {
 
   final List<Widget> _pages = [
     HomeScreen(), // Home screen
-    profilescreen(), // Profile screen
+    ProfileScreen(), // Profile screen
   ];
 
   @override

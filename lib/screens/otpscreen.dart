@@ -1,15 +1,17 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:bandhanmitra/mainwrapper.dart';
+import '../user_registration.dart';
 
 class OTPScreen extends StatefulWidget {
   final String verificationId;
-  final String phoneNumber; // Add the phoneNumber parameter
+  final String phoneNumber;
 
   const OTPScreen({
     Key? key,
     required this.verificationId,
-    required this.phoneNumber, // Add this line
+    required this.phoneNumber,
   }) : super(key: key);
 
   @override
@@ -18,7 +20,8 @@ class OTPScreen extends StatefulWidget {
 
 class _OTPScreenState extends State<OTPScreen> {
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
-  final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _controllers =
+  List.generate(6, (_) => TextEditingController());
   bool _isLoading = false;
 
   void _verifyOTP() async {
@@ -35,12 +38,32 @@ class _OTPScreenState extends State<OTPScreen> {
         );
 
         // Sign in using the credential
+        UserCredential userCredential =
         await FirebaseAuth.instance.signInWithCredential(credential);
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Mainwrapper()),
-        );
+        // Check if the user exists in Firestore
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user?.uid)
+            .get();
+
+        if (userDoc.exists) {
+          // User exists, navigate to Mainwrapper
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => Mainwrapper()),
+          );
+        } else {
+          // User does not exist, navigate to UserRegistrationScreen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserRegistrationScreen(
+                phoneNumber: widget.phoneNumber,
+              ),
+            ),
+          );
+        }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
@@ -69,13 +92,13 @@ class _OTPScreenState extends State<OTPScreen> {
                 Column(
                   children: [
                     Image.asset(
-                      'assets/images/logo2.png', // Match the logo from PhoneLoginScreen
+                      'assets/images/logo2.png',
                       width: 250,
                       height: 160,
                     ),
                     const SizedBox(height: 10),
                     Image.asset(
-                      'assets/images/login.png', // Replace with appropriate asset
+                      'assets/images/login.png',
                       width: 350,
                       height: 280,
                     ),
@@ -105,7 +128,7 @@ class _OTPScreenState extends State<OTPScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Enter the OTP sent to ${widget.phoneNumber}', // Use the phoneNumber here
+                              'Enter the OTP sent to ${widget.phoneNumber}',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 16,
@@ -135,12 +158,14 @@ class _OTPScreenState extends State<OTPScreen> {
                                 onChanged: (value) {
                                   if (value.isNotEmpty) {
                                     if (index < 5) {
-                                      FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
+                                      FocusScope.of(context)
+                                          .requestFocus(_focusNodes[index + 1]);
                                     } else {
                                       FocusScope.of(context).unfocus();
                                     }
                                   } else if (value.isEmpty && index > 0) {
-                                    FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
+                                    FocusScope.of(context)
+                                        .requestFocus(_focusNodes[index - 1]);
                                   }
                                 },
                               ),
@@ -183,10 +208,13 @@ class _OTPScreenState extends State<OTPScreen> {
                             textStyle: const TextStyle(fontSize: 20),
                           ),
                           child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.black)
+                              ? const CircularProgressIndicator(
+                            color: Colors.black,
+                          )
                               : const Text(
                             'Verify OTP',
-                            style: TextStyle(color: Colors.black, fontSize: 16),
+                            style: TextStyle(
+                                color: Colors.black, fontSize: 16),
                           ),
                         ),
                       ],

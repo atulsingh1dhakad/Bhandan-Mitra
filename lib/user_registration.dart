@@ -1,11 +1,76 @@
+import 'package:bandhanmitra/mainwrapper.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class UserRegistrationScreen extends StatelessWidget {
+class UserRegistrationScreen extends StatefulWidget {
+  final String phoneNumber; // Phone number passed from the OTP screen
+  const UserRegistrationScreen({Key? key, required this.phoneNumber})
+      : super(key: key);
+
+  @override
+  _UserRegistrationScreenState createState() => _UserRegistrationScreenState();
+}
+
+class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
   final TextEditingController fullNameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
   bool isChecked = false;
+  bool isLoading = false;
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  void _registerUser() async {
+    if (fullNameController.text.isEmpty ||
+        addressController.text.isEmpty ||
+        !isChecked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields and agree to the terms.')),
+      );
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // Check if user is authenticated
+      User? currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser != null) {
+        // Save user details to Firestore with phone number as the document ID
+        await _firestore.collection('users').doc(widget.phoneNumber).set({
+          'fullName': fullNameController.text,
+          'address': addressController.text,
+          'phoneNumber': widget.phoneNumber,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration successful!')),
+        );
+
+        // Navigate to the main screen or another screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Mainwrapper()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not signed in. Please log in.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +108,7 @@ class UserRegistrationScreen extends StatelessWidget {
                     filled: true,
                     fillColor: Colors.grey[200],
                     hintText: "Full name",
-                    prefixIcon: Icon(Icons.person, color: Colors.grey),
+                    prefixIcon: const Icon(Icons.person, color: Colors.grey),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide.none,
@@ -51,47 +116,14 @@ class UserRegistrationScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Email Field
+                // Address Field
                 TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: addressController,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.grey[200],
-                    hintText: "Valid email",
-                    prefixIcon: Icon(Icons.email, color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Phone Number Field
-                TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey[200],
-                    hintText: "Phone number",
-                    prefixIcon: Icon(Icons.phone, color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Password Field
-                TextField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey[200],
-                    hintText: "Strong Password",
-                    prefixIcon: Icon(Icons.lock, color: Colors.grey),
+                    hintText: "Address",
+                    prefixIcon: const Icon(Icons.home, color: Colors.grey),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide.none,
@@ -104,7 +136,9 @@ class UserRegistrationScreen extends StatelessWidget {
                     Checkbox(
                       value: isChecked,
                       onChanged: (bool? value) {
-                        isChecked = value ?? false;
+                        setState(() {
+                          isChecked = value ?? false;
+                        });
                       },
                     ),
                     const Expanded(
@@ -117,9 +151,7 @@ class UserRegistrationScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
-                    // Handle registration logic
-                  },
+                  onPressed: isLoading ? null : _registerUser,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xffFC4E37),
                     minimumSize: const Size(double.infinity, 54),
@@ -127,7 +159,9 @@ class UserRegistrationScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
+                  child: isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
                     "Next",
                     style: TextStyle(color: Colors.white, fontSize: 18),
                   ),
@@ -161,4 +195,3 @@ class UserRegistrationScreen extends StatelessWidget {
     );
   }
 }
-
